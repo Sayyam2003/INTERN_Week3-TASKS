@@ -1,0 +1,80 @@
+import sys
+import json
+import os
+
+NOTES_FILE = 'notes.json'
+
+def load_notes():
+    if not os.path.exists(NOTES_FILE):
+        return []
+    with open(NOTES_FILE, 'r') as f:
+        return json.load(f)
+
+def save_notes(notes):
+    with open(NOTES_FILE, 'w') as f:
+        json.dump(notes, f, indent=4)
+
+def add_note(content):
+    notes = load_notes()
+    note_id = len(notes) + 1
+    notes.append({'id': note_id, 'content': content})
+    save_notes(notes)
+    print(f"Note added with ID {note_id}")
+
+def list_notes():
+    notes = load_notes()
+    if not notes:
+        print("No notes found.")
+    else:
+        for note in notes:
+            print(f"{note['id']}: {note['content']}")
+
+def search_notes(keyword):
+    notes = load_notes()
+    found = [n for n in notes if keyword.lower() in n['content'].lower()]
+    if found:
+        for note in found:
+            print(f"{note['id']}: {note['content']}")
+    else:
+        print("No matching notes found.")
+
+def delete_note(note_id):
+    notes = load_notes()
+    new_notes = [n for n in notes if n['id'] != note_id]
+    if len(notes) == len(new_notes):
+        print(f"No note found with ID {note_id}")
+    else:
+        # Reassign IDs
+        for idx, note in enumerate(new_notes, 1):
+            note['id'] = idx
+        save_notes(new_notes)
+        print(f"Note with ID {note_id} deleted.")
+
+def show_help():
+    print("""
+Usage:
+    python notes_manager.py add "Your note content"
+    python notes_manager.py list
+    python notes_manager.py search "keyword"
+    python notes_manager.py delete <note_id>
+""")
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        show_help()
+    else:
+        command = sys.argv[1]
+
+        if command == "add" and len(sys.argv) >= 3:
+            add_note(" ".join(sys.argv[2:]))
+        elif command == "list":
+            list_notes()
+        elif command == "search" and len(sys.argv) >= 3:
+            search_notes(" ".join(sys.argv[2:]))
+        elif command == "delete" and len(sys.argv) == 3:
+            try:
+                delete_note(int(sys.argv[2]))
+            except ValueError:
+                print("Note ID must be an integer.")
+        else:
+            show_help()
